@@ -5,11 +5,17 @@ module.exports = {
     findByUserName: function (username, type) {
         return db.query(sqlMapping.stackerTeaching.findByUserName, [username, type]);
     },
+    findByUserById: function (id) {
+        return db.query(sqlMapping.stackerTeaching.findByUserById, id);
+    },
     findByToken: function (token) {
         return db.query(sqlMapping.stackerTeaching.findByToken, token);
     },
-    findUsers: function (type) {
-        return db.query(sqlMapping.stackerTeaching.findUsers, type);
+    findUsers: function (type, conditions) {
+        var sql = sqlMapping.stackerTeaching.findUsers;
+        if (conditions.length > 0)
+            sql = sql + ' and ' + conditions.join(' and ');
+        return db.query(sql, type);
     },
     updateUser: function (user) {
         return db.query(sqlMapping.stackerTeaching.updateUser, [user, user.id]);
@@ -33,8 +39,8 @@ module.exports = {
         return db.query(sqlMapping.stackerTeaching.findFaults);
     },
 
-    findTheoryExams: function () {
-        return db.query(sqlMapping.stackerTeaching.findTheoryExams);
+    findTheoryExams: function (type, recCount) {
+        return db.query(sqlMapping.stackerTeaching.findTheoryExams, [type, recCount]);
     },
     insertAssessmentLog: function (log) {
         return db.query(sqlMapping.stackerTeaching.insertAssessmentLog, log);
@@ -53,5 +59,8 @@ module.exports = {
     },
     findAssessmentLog: function (studentId) {
         return db.query(sqlMapping.stackerTeaching.findAssessmentLog, studentId);
+    },
+    deleteUser: function (uid) {
+        return db.query(sqlMapping.stackerTeaching.deleteUser, uid);
     }
 }

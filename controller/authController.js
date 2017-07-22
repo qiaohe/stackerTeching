@@ -4,6 +4,7 @@ var config = require('../config');
 var mainDAO = require('../dao/mainDAO');
 var _ = require('lodash');
 var uuid = require('node-uuid');
+var socket = require('../common/socket');
 module.exports = {
     login: function (req, res, next) {
         var userName = req.body.username;
@@ -24,7 +25,22 @@ module.exports = {
         });
         return next();
     },
-
+    loginWithUserId: function (req, res, next) {
+        var user = {};
+        mainDAO.findByUserById(req.params.id).then(function (users) {
+            user = users[0];
+            var token = uuid.v4();
+            user.token = token;
+            delete user.password;
+            return mainDAO.updateUser({id: user.id, token: token});
+        }).then(function (result) {
+            socket.send(JSON.stringify({commend: 'login', data: user}));
+            res.send({ret: 0, message: '学生端登录成功。'});
+        }).catch(function (err) {
+            res.send({ret: 1, message: err.message});
+        });
+        return next();
+    },
     logout: function (req, res, next) {
         var token = req.headers['token'];
         if (!token) return res.send(401, '无效的token');

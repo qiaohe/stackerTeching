@@ -19,11 +19,18 @@ module.exports = [
         secured: 'user'
     },
     {
-        method: "put",
-        path: "/api/users",
+        method: "post",
+        path: "/api/users/changePwd",
         handler: mainController.updateUser,
         secured: 'user'
     },
+    {
+        method: "post",
+        path: "/api/users/:id/remove",
+        handler: mainController.deleteUser,
+        secured: 'user'
+    },
+
     {
         method: "get",
         path: "/api/users/type/:type",
@@ -85,9 +92,15 @@ module.exports = [
         secured: 'user'
     },
     {
+        method: "post",
+        path: "/api/users/:id/login",
+        handler: authController.loginWithUserId,
+        secured: 'user'
+    },
+    {
         method: "get",
         path: "/api/menus/:id/resources",
-        handler: mainController.getResourceBy,
+        handler: authController.getResourceBy,
         secured: 'user'
     }
 ];

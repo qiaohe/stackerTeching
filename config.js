@@ -21,6 +21,7 @@ module.exports = {
         database: 'stackerTeaching',
         charset: 'UTF8MB4_GENERAL_CI'
     },
-    assessmentType: ['理论测评','电气维修测评', '驾驶测评']
+    assessmentType: ['理论测评','电气维修测评', '驾驶测评'],
+    authorizedCode: '910208'
 };
 

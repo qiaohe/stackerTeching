@@ -20,8 +20,10 @@ module.exports = {
         var user = req.body;
         user.createDate = new Date();
         user.password = md5(req.body.password);
+        if (req.body.authorizedCode != config.authorizedCode) return res.send({ret: 1, message: '无效的授权码。'});
         mainDAO.findByUserName(req.user.name, req.body.type).then(function (users) {
             if (users && users.length > 0) throw new Error('用户名已存在。');
+            delete user.authorizedCode;
             mainDAO.insertUser(user).then(function (result) {
                 user.id = result.insertId;
                 res.send({ret: 0, data: user});
@@ -32,7 +34,11 @@ module.exports = {
         return next();
     },
     getUsers: function (req, res, next) {
-        mainDAO.findUsers(req.params.type).then(function (users) {
+        var conditions = [];
+        if (req.query.class) conditions.push('class like \'%' + req.query.class + '%\'');
+        if (req.query.grade) conditions.push('grade like \'%' + req.query.grade + '%\'');
+        if (req.query.major) conditions.push('major like \'%' + req.query.major + '%\'');
+        mainDAO.findUsers(req.params.type, conditions).then(function (users) {
             res.send({ret: 0, data: users});
         }).catch(function (err) {
             res.send({ret: 1, message: err.message});
@@ -45,6 +51,15 @@ module.exports = {
         if (user.password) user.password = md5(req.body.password);
         mainDAO.updateUser(user).then(function (result) {
             res.send({ret: 0, message: user.password ? '修改密码成功。' : '更新成功。'});
+        }).catch(function (err) {
+            res.send({ret: 1, message: err.message});
+        });
+        return next();
+    },
+    deleteUser: function (req, res, next) {
+        if (req.body.authorizedCode != config.authorizedCode) return res.send({ret: 1, message: '无效的授权码。'});
+        mainDAO.deleteUser(req.params.id).then(function (result) {
+            res.send({ret: 0, message: '删除成功。'});
         }).catch(function (err) {
             res.send({ret: 1, message: err.message});
         });
@@ -130,11 +145,25 @@ module.exports = {
     },
 
     getTheoryExams: function (req, res, next) {
-        mainDAO.findTheoryExams().then(function (exams) {
-            exams.length > 0 && exams.forEach(function (exam) {
+        var data = [];
+        mainDAO.findTheoryExams(0, 15).then(function (singleChoiceQuestions) {
+            singleChoiceQuestions.length > 0 && singleChoiceQuestions.forEach(function (exam) {
                 exam.options = JSON.parse(exam.options);
             });
-            res.send({ret: 0, data: exams})
+            data.singleChoiceQuestions = singleChoiceQuestions;
+            return mainDAO.findTheoryExams(1, 15);
+        }).then(function (trueFalseQuestions) {
+            data.trueFalseQuestions = trueFalseQuestions;
+            return mainDAO.findTheoryExams(2, 10);
+        }).then(function (multipleChoiceQuestions) {
+            data.multipleChoiceQuestions = multipleChoiceQuestions;
+            multipleChoiceQuestions.length > 0 && multipleChoiceQuestions.forEach(function (exam) {
+                exam.options = JSON.parse(exam.options);
+            });
+            res.send({
+                ret: 0,
+                data: data.singleChoiceQuestions.concat(data.trueFalseQuestions, data.multipleChoiceQuestions)
+            });
         }).catch(function (err) {
             res.send({ret: 1, message: err.message});
         });
